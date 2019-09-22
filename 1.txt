@@ -1,0 +1,263 @@
+1)***********************************************
+
+#include<stdio.h>
+#include<stdlib.h>
+
+
+long memory[1000] ;
+int pc , opcode , reg , address ;
+int registers[4] , flag[] = {0,0,0,0,0,1};
+long op1 , op2 ;
+
+main(char *argv[] , int argc)
+{
+	FILE *fp ;
+	int k ;
+		fp = fopen("filename","r") ;
+		if(fp==NULL)
+		{
+			printf("Invalid file name.") ;
+			exit(0) ;
+		}
+		else
+		{	
+			pc = 0 ;
+						while(!feof(fp))
+				fscanf(fp,"%ld",&memory[pc++]) ;
+			k = pc-1 ;
+			pc=0 ;
+			
+			while(1) 
+			{	opcode = memory[pc]/10000 ;
+				reg = ((memory[pc]%10000)/1000) ;
+				address = (memory[pc]%10000)%1000 ;
+				
+				switch(opcode)
+				{
+					case 0 :
+						exit(0) ;
+					break ;
+					
+					case 1 :	registers[reg]+=memory[address] ;
+					break ;
+					
+					case 2 :	registers[reg]-=memory[address] ;
+					break ;
+					
+					case 3 :	registers[reg]*=memory[address] ;
+					break ;
+					
+					case 4 :	registers[reg]=memory[address] ;
+					break ;
+					
+					case 5 :	memory[address]=registers[reg] ;
+					break ;
+					
+					case 6 :	op1 = registers[reg] ;
+						op2 = memory[address] ;
+					break ;
+										
+					case 6 :	address = address-1 ;
+						
+						switch(reg)
+						{
+							case 0 :
+								if(op1>op2)
+									pc = address ;
+								printf("\n%daddress : ",pc) ;
+							break ;
+							
+							case 1 :
+								if(op1>=op2)
+									pc = address ;
+							break ;
+							
+							case 2 :
+								if(op1==op2)
+									pc = address ;
+							break ;
+							
+							case 3 :
+								if(op1<op2)
+									pc = address ;
+							break ;
+							
+							case 4 :
+								if(op1<=op2)
+									pc = address ;
+							break ;
+							
+							case 5 :
+								pc = address ;
+							break ;
+						}
+					break ;
+					
+					case 8 :	memory[address]/=registers[reg] ;
+					break ;
+					
+					case 9 :	printf("Enter the value : ") ;
+						scanf("%ld",&memory[address]) ;
+					break ;
+					
+					case 10 :	if(memory[address]==1)
+						//printf("Answer is : %ld\n",memory[address]) ;
+					    printf("Number 1 is greater\n");
+					  else
+					    printf("Number 2 is greater\n");
+					break ;
+				}
+				pc++ ;
+			}
+		}
+	return 0 ;
+}
+
+
+2)***************************************************
+
+#include<stdio.h>
+int n,nf;
+int in[100];
+int p[50];
+int hit=0;
+int i,j,k;
+int pgfaultcnt=0;
+
+void getData()
+{
+    printf("\nEnter length of page reference sequence:");
+    scanf("%d",&n);
+    printf("\nEnter the page reference sequence:");
+    for(i=0; i<n; i++)
+        scanf("%d",&in[i]);
+    printf("\nEnter no of frames:");
+    scanf("%d",&nf);
+}
+
+void initialize()
+{
+    pgfaultcnt=0;
+    for(i=0; i<nf; i++)
+        p[i]=9999;
+}
+
+int isHit(int data)
+{
+    hit=0;
+    for(j=0; j<nf; j++)
+    {
+        if(p[j]==data)
+        {
+            hit=1;
+            break;
+        }
+
+    }
+
+    return hit;
+}
+
+int getHitIndex(int data)
+{
+    int hitind;
+    for(k=0; k<nf; k++)
+    {
+        if(p[k]==data)
+        {
+            hitind=k;
+            break;
+        }
+    }
+    return hitind;
+}
+
+void dispPages()
+{
+    for (k=0; k<nf; k++)
+    {
+        if(p[k]!=9999)
+            printf(" %d",p[k]);
+    }
+
+}
+
+void dispPgFaultCnt()
+{
+    printf("\nTotal no of page faults:%d",pgfaultcnt);
+}
+
+void lfu()
+{
+    int usedcnt[100];
+    int least,repin,sofarcnt=0,bn;
+    initialize();
+    for(i=0; i<nf; i++)
+        usedcnt[i]=0;
+
+    for(i=0; i<n; i++)
+    {
+
+        printf("\n For %d :",in[i]);
+        if(isHit(in[i]))
+        {
+            int hitind=getHitIndex(in[i]);
+            usedcnt[hitind]++;
+            printf("No page fault!");
+        }
+        else
+        {
+            pgfaultcnt++;
+            if(bn<nf)
+            {
+                p[bn]=in[i];
+                usedcnt[bn]=usedcnt[bn]+1;
+                bn++;
+            }
+            else
+            {
+                least=9999;
+                for(k=0; k<nf; k++)
+                    if(usedcnt[k]<least)
+                    {
+                        least=usedcnt[k];
+                        repin=k;
+                    }
+                p[repin]=in[i];
+                sofarcnt=0;
+                for(k=0; k<=i; k++)
+                    if(in[i]==in[k])
+                        sofarcnt=sofarcnt+1;
+                usedcnt[repin]=sofarcnt;
+            }
+
+            dispPages();
+        }
+
+    }
+    dispPgFaultCnt();
+}
+
+int main()
+{
+    int choice;
+    while(1)
+    {
+        printf("\nPage Replacement Algorithms\n1.Enter data\n2.lfu\nEnter your choice:");
+        scanf("%d",&choice);
+        switch(choice)
+        {
+        case 1:
+            getData();
+            
+        case 2:
+            lfu();
+            break;
+     
+        default:
+            return 0;
+            break;
+        }
+    }
+}
+
